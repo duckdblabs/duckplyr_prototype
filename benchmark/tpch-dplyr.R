@@ -1,20 +1,34 @@
-library(commandArgs(TRUE)[1], character.only=T)
+pkg <- commandArgs(TRUE)[1]
+
+library(pkg, character.only=T)
 
 test_dplyr_q <- list()
 
 tables <- c("lineitem", "partsupp", "part", "supplier", "nation", "orders", "customer", "region")
 env <- environment()
+
+
+if (pkg == "arrow") {
+  library("dplyr")
+  lapply(tables, function(t) {
+  assign(t, arrow_table(readRDS(paste0(t, ".rds"))), env=env)
+  NULL
+})
+
+} else {
 lapply(tables, function(t) {
   assign(t, readRDS(paste0(t, ".rds")), env=env)
   NULL
 })
+}
+
 
 
 test_dplyr_q[[1]] <- function() {
   lineitem |>
     select(l_shipdate, l_returnflag, l_linestatus, l_quantity, 
         l_extendedprice, l_discount, l_tax) |>
-    filter(l_shipdate <= "1998-09-02") |>
+    filter(l_shipdate <= as.Date("1998-09-02")) |>
     select(l_returnflag, l_linestatus, l_quantity, l_extendedprice, l_discount, l_tax) |>
     group_by(l_returnflag, l_linestatus) |>
     summarise(
@@ -83,7 +97,7 @@ test_dplyr_q[[3]] <- function() {
   oc <- inner_join(
     orders |>
       select(o_orderkey, o_custkey, o_orderdate, o_shippriority) |>
-      filter(o_orderdate < "1995-03-15"),
+      filter(o_orderdate < as.Date("1995-03-15")),
     customer |>
       select(c_custkey, c_mktsegment) |>
       filter(c_mktsegment == "BUILDING"),
@@ -94,7 +108,7 @@ test_dplyr_q[[3]] <- function() {
   loc <- inner_join(
     lineitem |>
       select(l_orderkey, l_shipdate, l_extendedprice, l_discount) |>
-      filter(l_shipdate > "1995-03-15") |>
+      filter(l_shipdate > as.Date("1995-03-15")) |>
       select(l_orderkey, l_extendedprice, l_discount),
     oc, by = c("l_orderkey" = "o_orderkey")
   )
@@ -117,7 +131,7 @@ test_dplyr_q[[4]] <- function() {
 
   o <- orders |>
     select(o_orderkey, o_orderdate, o_orderpriority) |>
-    filter(o_orderdate >= "1993-07-01", o_orderdate < "1993-10-01") |>
+    filter(o_orderdate >= as.Date("1993-07-01"), o_orderdate < as.Date("1993-10-01")) |>
     select(o_orderkey, o_orderpriority)
 
   # distinct after join, tested and indeed faster
@@ -158,7 +172,7 @@ test_dplyr_q[[5]] <- function() {
 
   o <- orders |> 
     select(o_orderdate, o_orderkey, o_custkey) |> 
-    filter(o_orderdate >= "1994-01-01", o_orderdate < "1995-01-01") |> 
+    filter(o_orderdate >= as.Date("1994-01-01"), o_orderdate < as.Date("1995-01-01")) |> 
     select(o_orderkey, o_custkey)
 
   oc <- inner_join(o, customer |> select(c_custkey, c_nationkey), 
@@ -182,8 +196,8 @@ test_dplyr_q[[5]] <- function() {
 test_dplyr_q[[6]] <- function() {
   lineitem |>
     select(l_shipdate, l_extendedprice, l_discount, l_quantity) |>
-    filter(l_shipdate >= "1994-01-01", 
-        l_shipdate < "1995-01-01", 
+    filter(l_shipdate >= as.Date("1994-01-01"), 
+        l_shipdate < as.Date("1995-01-01"), 
         l_discount >= 0.05, 
         l_discount <= 0.07, 
         l_quantity < 24) |>
@@ -198,7 +212,7 @@ test_dplyr_q[[7]] <- function() {
     nation |> 
         select(n1_nationkey = n_nationkey, n1_name = n_name) |> 
         #filter(n1_name %in% c("FRANCE", "GERMANY")),  TODO
-        filter(n1_name == "FRANCE" || n1_name == "GERMANY"),
+        filter(n1_name == "FRANCE" | n1_name == "GERMANY"),
     by = c("s_nationkey" = "n1_nationkey")) |> 
     select(s_suppkey, n1_name)
 
@@ -208,7 +222,7 @@ test_dplyr_q[[7]] <- function() {
     nation |> 
         select(n2_nationkey = n_nationkey, n2_name = n_name) |> 
         #filter(n2_name %in% c("FRANCE", "GERMANY")),
-        filter(n2_name == "FRANCE" || n2_name == "GERMANY"),
+        filter(n2_name == "FRANCE" | n2_name == "GERMANY"),
     by = c("c_nationkey" = "n2_nationkey")) |> 
     select(c_custkey, n2_name)
 
@@ -221,7 +235,7 @@ test_dplyr_q[[7]] <- function() {
   cnol <- inner_join(
     lineitem |> 
         select(l_orderkey, l_suppkey, l_shipdate, l_extendedprice, l_discount) |> 
-        filter(l_shipdate >= "1995-01-01", l_shipdate <= "1996-12-31"), 
+        filter(l_shipdate >= as.Date("1995-01-01"), l_shipdate <= as.Date("1996-12-31")), 
     cno, 
     by = c("l_orderkey" = "o_orderkey")) |> 
     select(l_suppkey, l_shipdate, l_extendedprice, l_discount, n2_name)
@@ -264,7 +278,7 @@ test_dplyr_q[[8]] <- function() {
   ocnr <- inner_join(
     orders |> 
         select(o_orderkey, o_custkey, o_orderdate) |> 
-        filter(o_orderdate >= "1995-01-01", o_orderdate <= "1996-12-31"), 
+        filter(o_orderdate >= as.Date("1995-01-01"), o_orderdate <= as.Date("1996-12-31")), 
     cnr, by = c("o_custkey" = "c_custkey")) |> 
     select(o_orderkey, o_orderdate)
 
@@ -363,7 +377,7 @@ test_dplyr_q[[10]] <- function() {
   
   o <- orders |> 
     select(o_orderkey, o_custkey, o_orderdate) |> 
-    filter(o_orderdate >= "1993-10-01", o_orderdate < "1994-01-01") |> 
+    filter(o_orderdate >= as.Date("1993-10-01"), o_orderdate < as.Date("1994-01-01")) |> 
     select(o_orderkey, o_custkey)
   
   lo <- inner_join(l, o, 
@@ -396,11 +410,18 @@ test_dplyr_q[[10]] <- function() {
 }
 
 
-invisible(lapply(test_dplyr_q, function(f) {
-  print(f)
-  rel <- f()
-  print(rel)
-  print(duckdb::rel_explain(rel))
-  print(as.data.frame(rel))
-  NULL
-}))
+
+res <- list()
+
+for (q in 1:length(test_dplyr_q)) {
+    f <- test_dplyr_q[[q]]
+    cold <- as.data.frame(f())
+    time <- system.time(as.data.frame(f()))[[3]]
+    print(q)
+    print(time)
+    res[[q]] <- data.frame(pkg=pkg, q=q, time = time)
+}
+
+df <- do.call(rbind, res)
+write.csv(df, paste0("res-", pkg, ".csv"))
+
