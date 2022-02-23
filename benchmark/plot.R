@@ -11,13 +11,13 @@ theme(axis.title.y=element_text(vjust=0.9),
   axis.title.x=element_text(vjust=-0.1),
   axis.ticks.x=element_blank(),
   text=element_text(family="serif"), legend.title = element_blank(),
-  legend.position = c(0.60, 0.75),
+  legend.position = c(0.60, 0.70),
     legend.justification = c("left", "bottom"),
     legend.box.just = "left",
     legend.margin = margin(0, 0, 0, 0), legend.background= element_blank())
 
 
-results <- rbind(read.csv("res-dplyr.csv"), read.csv("res-duckplyr.csv"), read.csv("res-data.table.csv")) 
+results <- rbind(read.csv("res-dplyr.csv"), read.csv("res-duckplyr.csv"), read.csv("res-data.table.csv"), read.csv("res-arrow.csv")) 
 
 aggr_results <- results %>% mutate(file=pkg, query=sprintf("%2d", q), time_seconds=time) %>% group_by(file, query) %>% summarize(median_time_seconds = median(time_seconds))
 
