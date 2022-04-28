@@ -24,7 +24,7 @@ setkey(part, "p_partkey")
 setkey(region, "r_regionkey")
 setkey(nation, "n_nationkey")
 
-#setDTthreads(1)
+setDTthreads(8)
 
 test_dt_q[[1]] <- function() {
 	lineitem[

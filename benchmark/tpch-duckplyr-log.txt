@@ -1799,3 +1799,13 @@ NULL
 [38;5;250m19[39m     [4m2[24m[4m0[24m614 Custom…   [4m1[24m078.    [4m6[24m767.  FRANCE  0ar8dXwvjv… 16-124… [38;5;246m"[39mss the regu…
 [38;5;250m20[39m     [4m9[24m[4m0[24m542 Custom…   [4m1[24m086.    [4m8[24m715.  SAUDI … e PacvMjNI… 30-809… [38;5;246m"[39mlly across …
 > 
+> library(commandArgs(TRUE)[1], character.only=T)
+> 
+> test_dplyr_q <- list()
+> 
+> tables <- c("lineitem", "partsupp", "part", "supplier", "nation", "orders", "customer", "region")
+> env <- environment()
+> lapply(tables, function(t) {
++   assign(t, readRDS(paste0(t, ".rds")), env=env)
++   NULL
++ })
