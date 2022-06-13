@@ -20,7 +20,14 @@ duckdb_encode_expression <- function(e, env, rel) {
 			args <- list()
 			if (length(e) > 1) {
 				args <- lapply(e[2:length(e)], duckdb_encode_expression, env, rel)
-      		} 
+      		}
+
+            # behold
+            name <- switch(name,
+            '|' = 'or',
+            '&' = 'and',
+            name)
+
       		return(duckdb::expr_function(name, args))
 
       	},
@@ -53,7 +60,25 @@ duckdb_encode_expression <- function(e, env, rel) {
 default_duckdb_connection <- new.env(parent=emptyenv())
 get_default_duckdb_connection <- function() {
 	if(!exists("con", default_duckdb_connection)) {
-	  default_duckdb_connection$con <- DBI::dbConnect(duckdb::duckdb())
+	  con <- DBI::dbConnect(duckdb::duckdb())
+	  # comparisons
+	  DBI::dbExecute(con, 'CREATE MACRO "<"(a, b) AS a < b')
+	  DBI::dbExecute(con, 'CREATE MACRO "<="(a, b) AS a <= b')
+  	  DBI::dbExecute(con, 'CREATE MACRO "=="(a, b) AS a = b')
+  	  DBI::dbExecute(con, 'CREATE MACRO ">="(a, b) AS a >= b')
+  	  DBI::dbExecute(con, 'CREATE MACRO ">"(a, b) AS a > b')
+  	  # casts
+  	  DBI::dbExecute(con, 'CREATE MACRO "as.Date"(a) AS CAST(a as DATE)')
+	  DBI::dbExecute(con, 'CREATE MACRO "as.integer"(a) AS CAST(a as INTEGER)')
+      # random stuff
+	  DBI::dbExecute(con, 'CREATE MACRO "or"(a, b) AS a OR b')
+	  DBI::dbExecute(con, 'CREATE MACRO "and"(a, b) AS a AND b')
+	  DBI::dbExecute(con, 'CREATE MACRO "ifelse"(c, t, f) AS CASE WHEN c THEN t ELSE f END')
+	  DBI::dbExecute(con, 'CREATE MACRO "grepl"(r, s) AS regexp_matches(s, r)')
+      # aggregates
+	  DBI::dbExecute(con, 'CREATE MACRO "n"() AS COUNT(*)')
+
+	  default_duckdb_connection$con <- con
 	  reg.finalizer(default_duckdb_connection, function(x) {
 	  DBI::dbDisconnect(x$con, shutdown=TRUE)
 	  }, onexit=TRUE)

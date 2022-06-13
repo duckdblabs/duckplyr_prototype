@@ -49,7 +49,7 @@ test_dplyr_q[[2]] <- function() {
 
   p <- part |>
     select(p_partkey, p_type, p_size, p_mfgr) |>
-    filter(p_size == 15, grepl(".*BRASS$", p_type)) |>
+    filter(p_size == 15, grepl("BRASS$", p_type)) |>
     select(p_partkey, p_mfgr)
 
   psp <- inner_join(ps, p, by = c("ps_partkey" = "p_partkey"))
@@ -323,7 +323,7 @@ test_dplyr_q[[8]] <- function() {
 test_dplyr_q[[9]] <- function() {
   p <- part |> 
     select(p_name, p_partkey) |> 
-    filter(grepl(".*green.*", p_name)) |>
+    filter(grepl("green", p_name)) |>
     select(p_partkey)
 
   psp <- inner_join(
